@@ -2055,4 +2055,20 @@ async def get_futures_snapshot(
 
 def run(transport: Literal["stdio", "sse", "streamable-http"] = "stdio") -> None:
     """Run the Polygon MCP server."""
-    poly_mcp.run(transport)
+    if transport == "streamable-http":
+        # Bind to all interfaces for cloud platforms (e.g., Railway, Render, Fly.io)
+        host = os.environ.get("HOST", "0.0.0.0")
+
+        # Prefer platform-provided PORT, fall back to MCP_PORT, then 8000
+        port_str = os.environ.get("PORT") or os.environ.get("MCP_PORT") or "8000"
+        try:
+            port = int(port_str)
+        except ValueError:
+            port = 8000
+
+        # Allow overriding the HTTP path; default is "/mcp"
+        path = os.environ.get("MCP_HTTP_PATH", "/mcp")
+
+        poly_mcp.run(transport, host=host, port=port, path=path)
+    else:
+        poly_mcp.run(transport)
