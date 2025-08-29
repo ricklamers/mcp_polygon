@@ -20,7 +20,15 @@ except PackageNotFoundError:
 polygon_client = RESTClient(POLYGON_API_KEY)
 polygon_client.headers["User-Agent"] += f" {version_number}"
 
-poly_mcp = FastMCP("Polygon", dependencies=["polygon"])
+# Configure FastMCP HTTP bind settings from environment for cloud platforms
+_http_host = os.environ.get("HOST", "0.0.0.0")
+_http_port_str = os.environ.get("PORT") or os.environ.get("MCP_PORT") or "8000"
+try:
+    _http_port = int(_http_port_str)
+except ValueError:
+    _http_port = 8000
+
+poly_mcp = FastMCP("Polygon", dependencies=["polygon"], host=_http_host, port=_http_port)
 
 
 @poly_mcp.tool()
@@ -2055,20 +2063,4 @@ async def get_futures_snapshot(
 
 def run(transport: Literal["stdio", "sse", "streamable-http"] = "stdio") -> None:
     """Run the Polygon MCP server."""
-    if transport == "streamable-http":
-        # Bind to all interfaces for cloud platforms (e.g., Railway, Render, Fly.io)
-        host = os.environ.get("HOST", "0.0.0.0")
-
-        # Prefer platform-provided PORT, fall back to MCP_PORT, then 8000
-        port_str = os.environ.get("PORT") or os.environ.get("MCP_PORT") or "8000"
-        try:
-            port = int(port_str)
-        except ValueError:
-            port = 8000
-
-        # Allow overriding the HTTP path; default is "/mcp"
-        path = os.environ.get("MCP_HTTP_PATH", "/mcp")
-
-        poly_mcp.run(transport, host=host, port=port, path=path)
-    else:
-        poly_mcp.run(transport)
+    poly_mcp.run(transport)
