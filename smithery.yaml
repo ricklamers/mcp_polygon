@@ -1,0 +1,18 @@
+runtime: "container"
+startCommand:
+  type: "http"
+  configSchema:
+    type: "object"
+    required: ["apiKey"]
+    properties:
+      apiKey:
+        type: "string"
+        title: "Polygon API Key"
+        description: "Your Polygon.io API key"
+  exampleConfig:
+    apiKey: "sk-example123"
+build:
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
+env:
+  MCP_TRANSPORT: "streamable-http"
